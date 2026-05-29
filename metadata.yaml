@@ -1,0 +1,24 @@
+data:
+  connectorType: source
+  connectorSubtype: api
+  definitionId: 1d4f6e8c-7b9a-4e2c-9d5f-7e6a3b8c1d2e
+  dockerRepository: ghcr.io/ifokeev/airbyte-source-reo-dev
+  dockerImageTag: 0.1.0
+  name: reo.dev
+  documentationUrl: https://github.com/ifokeev/airbyte-source-reo-dev
+  githubIssueLabel: source-reo-dev
+  icon: icon.svg
+  license: MIT
+  supportLevel: community
+  releaseStage: alpha
+  releases:
+    breakingChanges: {}
+  tags:
+    - language:python
+    - cdk:low-code
+  ab_internal:
+    sl: 100
+    ql: 200
+  remoteRegistries:
+    pypi:
+      enabled: false

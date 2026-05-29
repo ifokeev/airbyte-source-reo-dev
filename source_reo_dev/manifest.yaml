@@ -1,0 +1,1247 @@
+version: 7.17.1
+
+type: DeclarativeSource
+
+check:
+  type: CheckStream
+  stream_names:
+    - segments
+
+definitions:
+  linked:
+    HttpRequester:
+      authenticator:
+        type: ApiKeyAuthenticator
+        api_token: "{{ config['api_key'] }}"
+        inject_into:
+          type: RequestOption
+          field_name: x-api-key
+          inject_into: header
+      error_handler:
+        type: DefaultErrorHandler
+        max_retries: 8
+        response_filters:
+          - type: HttpResponseFilter
+            action: RETRY
+            http_codes:
+              - 429
+        backoff_strategies:
+          - type: ExponentialBackoffStrategy
+            factor: 5
+    SimpleRetriever:
+      paginator:
+        type: DefaultPaginator
+        page_token_option:
+          type: RequestOption
+          field_name: page
+          inject_into: request_parameter
+        pagination_strategy:
+          type: PageIncrement
+          page_size: 100
+          start_from_page: 1
+        pagination_strategy_options:
+          stop_condition: "{{ response.get('page_no', 0) >= response.get('total_pages', 0) }}"
+
+streams:
+  - type: DeclarativeStream
+    name: segments
+    retriever:
+      type: SimpleRetriever
+      requester:
+        type: HttpRequester
+        url: https://integration.reo.dev/segments
+        http_method: GET
+        authenticator:
+          $ref: "#/definitions/linked/HttpRequester/authenticator"
+        error_handler:
+          $ref: "#/definitions/linked/HttpRequester/error_handler"
+      record_selector:
+        type: RecordSelector
+        extractor:
+          type: DpathExtractor
+          field_path:
+            - data
+    primary_key:
+      - id
+    schema_loader:
+      type: InlineSchemaLoader
+      schema:
+        type: object
+        $schema: http://json-schema.org/schema#
+        required:
+          - id
+        properties:
+          type:
+            type:
+              - string
+              - "null"
+          id:
+            type: string
+          name:
+            type:
+              - string
+              - "null"
+          owner:
+            type:
+              - string
+              - "null"
+        additionalProperties: true
+  - type: DeclarativeStream
+    name: audiences
+    retriever:
+      type: SimpleRetriever
+      requester:
+        type: HttpRequester
+        url: https://integration.reo.dev/audiences
+        http_method: GET
+        authenticator:
+          $ref: "#/definitions/linked/HttpRequester/authenticator"
+        error_handler:
+          $ref: "#/definitions/linked/HttpRequester/error_handler"
+      record_selector:
+        type: RecordSelector
+        extractor:
+          type: DpathExtractor
+          field_path:
+            - data
+    primary_key:
+      - id
+    schema_loader:
+      type: InlineSchemaLoader
+      schema:
+        type: object
+        $schema: http://json-schema.org/schema#
+        required:
+          - id
+        properties:
+          type:
+            type:
+              - string
+              - "null"
+          id:
+            type: string
+          name:
+            type:
+              - string
+              - "null"
+          count:
+            type:
+              - number
+              - "null"
+          limit:
+            type:
+              - number
+              - "null"
+          filter:
+            type:
+              - object
+              - "null"
+            properties:
+              location:
+                type:
+                  - array
+                  - "null"
+              seniority:
+                type:
+                  - array
+                  - "null"
+                items:
+                  type:
+                    - string
+                    - "null"
+              designation:
+                type:
+                  - array
+                  - "null"
+                items:
+                  type:
+                    - string
+                    - "null"
+              job_function:
+                type:
+                  - array
+                  - "null"
+              tech_function:
+                type:
+                  - array
+                  - "null"
+                items:
+                  type:
+                    - string
+                    - "null"
+          source:
+            type:
+              - string
+              - "null"
+          source_id:
+            type:
+              - string
+              - "null"
+          created_at:
+            type:
+              - string
+              - "null"
+          created_by:
+            type:
+              - string
+              - "null"
+          updated_at:
+            type:
+              - string
+              - "null"
+          auto_refresh:
+            type:
+              - boolean
+              - "null"
+          verified_only:
+            type:
+              - boolean
+              - "null"
+          last_synced_at:
+            type:
+              - string
+              - "null"
+          credits_consumed:
+            type:
+              - number
+              - "null"
+        additionalProperties: true
+  - type: DeclarativeStream
+    name: account_segments
+    retriever:
+      type: SimpleRetriever
+      requester:
+        type: HttpRequester
+        url: https://integration.reo.dev/segments
+        http_method: GET
+        authenticator:
+          $ref: "#/definitions/linked/HttpRequester/authenticator"
+        error_handler:
+          $ref: "#/definitions/linked/HttpRequester/error_handler"
+      record_selector:
+        type: RecordSelector
+        extractor:
+          type: DpathExtractor
+          field_path:
+            - data
+        record_filter:
+          type: RecordFilter
+          condition: "{{ record['type'] == 'ACCOUNT' }}"
+    primary_key:
+      - id
+    schema_loader:
+      type: InlineSchemaLoader
+      schema:
+        type: object
+        $schema: http://json-schema.org/schema#
+        required:
+          - id
+        properties:
+          type:
+            type:
+              - string
+              - "null"
+          id:
+            type: string
+          name:
+            type:
+              - string
+              - "null"
+          owner:
+            type:
+              - string
+              - "null"
+        additionalProperties: true
+  - type: DeclarativeStream
+    name: developer_segments
+    retriever:
+      type: SimpleRetriever
+      requester:
+        type: HttpRequester
+        url: https://integration.reo.dev/segments
+        http_method: GET
+        authenticator:
+          $ref: "#/definitions/linked/HttpRequester/authenticator"
+        error_handler:
+          $ref: "#/definitions/linked/HttpRequester/error_handler"
+      record_selector:
+        type: RecordSelector
+        extractor:
+          type: DpathExtractor
+          field_path:
+            - data
+        record_filter:
+          type: RecordFilter
+          condition: "{{ record['type'] == 'DEVELOPER' }}"
+    primary_key:
+      - id
+    schema_loader:
+      type: InlineSchemaLoader
+      schema:
+        type: object
+        $schema: http://json-schema.org/schema#
+        required:
+          - id
+        properties:
+          type:
+            type:
+              - string
+              - "null"
+          id:
+            type: string
+          name:
+            type:
+              - string
+              - "null"
+          owner:
+            type:
+              - string
+              - "null"
+        additionalProperties: true
+  - type: DeclarativeStream
+    name: segment_accounts
+    retriever:
+      type: SimpleRetriever
+      paginator:
+        $ref: "#/definitions/linked/SimpleRetriever/paginator"
+      requester:
+        type: HttpRequester
+        url: >-
+          https://integration.reo.dev/segment/{{ stream_partition.segment_id
+          }}/accounts
+        http_method: GET
+        authenticator:
+          $ref: "#/definitions/linked/HttpRequester/authenticator"
+        error_handler:
+          $ref: "#/definitions/linked/HttpRequester/error_handler"
+      record_selector:
+        type: RecordSelector
+        extractor:
+          type: DpathExtractor
+          field_path:
+            - data
+      partition_router:
+        type: SubstreamPartitionRouter
+        parent_stream_configs:
+          - type: ParentStreamConfig
+            stream:
+              $ref: "#/streams/2"
+            parent_key: id
+            partition_field: segment_id
+    primary_key:
+      - - id
+      - - segment_id
+    schema_loader:
+      type: InlineSchemaLoader
+      schema:
+        type: object
+        $schema: http://json-schema.org/schema#
+        required:
+          - id
+          - segment_id
+        properties:
+          id:
+            type: string
+          city:
+            type:
+              - string
+              - "null"
+          tags:
+            type:
+              - string
+              - "null"
+          state:
+            type:
+              - string
+              - "null"
+          country:
+            type:
+              - string
+              - "null"
+          industry:
+            type:
+              - string
+              - "null"
+          linkedin:
+            type:
+              - string
+              - "null"
+          agent_tags:
+            type:
+              - string
+              - "null"
+          segment_id:
+            type: string
+          account_name:
+            type:
+              - string
+              - "null"
+          customer_fit:
+            type:
+              - string
+              - "null"
+          founded_year:
+            type:
+              - string
+              - "null"
+          segment_name:
+            type:
+              - string
+              - "null"
+          account_domain:
+            type:
+              - string
+              - "null"
+          annual_revenue:
+            type:
+              - string
+              - "null"
+          first_activity:
+            type:
+              - number
+              - "null"
+          latest_activity:
+            type:
+              - number
+              - "null"
+          developer_funnel:
+            type:
+              - string
+              - "null"
+          reo_account_link:
+            type:
+              - string
+              - "null"
+          developer_activity:
+            type:
+              - string
+              - "null"
+          last_activity_date:
+            type:
+              - string
+              - "null"
+          first_activity_date:
+            type:
+              - string
+              - "null"
+          employee_count_range:
+            type:
+              - string
+              - "null"
+          preferred_technology:
+            type:
+              - string
+              - "null"
+          tech_functions_count:
+            type:
+              - object
+              - "null"
+            properties:
+              ai_ml_count:
+                type:
+                  - number
+                  - "null"
+              full_stack_count:
+                type:
+                  - number
+                  - "null"
+              engineering_count:
+                type:
+                  - number
+                  - "null"
+              unclassified_count:
+                type:
+                  - number
+                  - "null"
+              data_analytics_count:
+                type:
+                  - number
+                  - "null"
+              total_tech_employees:
+                type:
+                  - number
+                  - "null"
+              gtm_ops_corporate_count:
+                type:
+                  - number
+                  - "null"
+              product_design_ux_count:
+                type:
+                  - number
+                  - "null"
+              mobile_engineering_count:
+                type:
+                  - number
+                  - "null"
+              backend_engineering_count:
+                type:
+                  - number
+                  - "null"
+              security_compliance_count:
+                type:
+                  - number
+                  - "null"
+              cloud_infrastructure_count:
+                type:
+                  - number
+                  - "null"
+              frontend_engineering_count:
+                type:
+                  - number
+                  - "null"
+              infrastructure_it_ops_count:
+                type:
+                  - number
+                  - "null"
+              qa_automation_testing_count:
+                type:
+                  - number
+                  - "null"
+              engineering_leadership_count:
+                type:
+                  - number
+                  - "null"
+              innovation_rd_emerging_count:
+                type:
+                  - number
+                  - "null"
+              program_delivery_agile_count:
+                type:
+                  - number
+                  - "null"
+              devops_platform_reliability_count:
+                type:
+                  - number
+                  - "null"
+          activity_score_numeric:
+            type:
+              - number
+              - "null"
+          active_developers_count:
+            type:
+              - number
+              - "null"
+        additionalProperties: true
+  - type: DeclarativeStream
+    name: segment_developers
+    retriever:
+      type: SimpleRetriever
+      paginator:
+        $ref: "#/definitions/linked/SimpleRetriever/paginator"
+      requester:
+        type: HttpRequester
+        url: >-
+          https://integration.reo.dev/segment/{{ stream_partition.segment_id
+          }}/developers
+        http_method: GET
+        authenticator:
+          $ref: "#/definitions/linked/HttpRequester/authenticator"
+        error_handler:
+          $ref: "#/definitions/linked/HttpRequester/error_handler"
+      record_selector:
+        type: RecordSelector
+        extractor:
+          type: DpathExtractor
+          field_path:
+            - data
+      partition_router:
+        type: SubstreamPartitionRouter
+        parent_stream_configs:
+          - type: ParentStreamConfig
+            stream:
+              $ref: "#/streams/3"
+            parent_key: id
+            partition_field: segment_id
+    primary_key:
+      - - id
+      - - segment_id
+    schema_loader:
+      type: InlineSchemaLoader
+      schema:
+        type: object
+        $schema: http://json-schema.org/schema#
+        required:
+          - id
+          - segment_id
+        properties:
+          id:
+            type: string
+          city:
+            type:
+              - string
+              - "null"
+          tags:
+            type:
+              - string
+              - "null"
+          state:
+            type:
+              - string
+              - "null"
+          org_id:
+            type:
+              - string
+              - "null"
+          country:
+            type:
+              - string
+              - "null"
+          agent_tags:
+            type:
+              - string
+              - "null"
+          segment_id:
+            type: string
+          designation:
+            type:
+              - string
+              - "null"
+          segment_name:
+            type:
+              - string
+              - "null"
+          activity_score:
+            type:
+              - string
+              - "null"
+          developer_name:
+            type:
+              - string
+              - "null"
+          first_activity:
+            type:
+              - number
+              - "null"
+          developer_github:
+            type:
+              - string
+              - "null"
+          developer_linkedin:
+            type:
+              - string
+              - "null"
+          last_activity_date:
+            type:
+              - string
+              - "null"
+          reo_developer_link:
+            type:
+              - string
+              - "null"
+          developer_last_name:
+            type:
+              - string
+              - "null"
+          first_activity_date:
+            type:
+              - string
+              - "null"
+          developer_first_name:
+            type:
+              - string
+              - "null"
+          employee_count_range:
+            type:
+              - string
+              - "null"
+          latest_activity_time:
+            type:
+              - number
+              - "null"
+          activity_score_numeric:
+            type:
+              - number
+              - "null"
+          developer_business_email:
+            type:
+              - string
+              - "null"
+        additionalProperties: true
+  - type: DeclarativeStream
+    name: audience_members
+    retriever:
+      type: SimpleRetriever
+      paginator:
+        $ref: "#/definitions/linked/SimpleRetriever/paginator"
+      requester:
+        type: HttpRequester
+        url: >-
+          https://integration.reo.dev/audiences/{{ stream_partition.audience_id
+          }}/members
+        http_method: GET
+        authenticator:
+          $ref: "#/definitions/linked/HttpRequester/authenticator"
+        error_handler:
+          $ref: "#/definitions/linked/HttpRequester/error_handler"
+      record_selector:
+        type: RecordSelector
+        extractor:
+          type: DpathExtractor
+          field_path:
+            - data
+      partition_router:
+        type: SubstreamPartitionRouter
+        parent_stream_configs:
+          - type: ParentStreamConfig
+            stream:
+              $ref: "#/streams/1"
+            parent_key: id
+            partition_field: audience_id
+    primary_key:
+      - - id
+      - - audience_id
+    schema_loader:
+      type: InlineSchemaLoader
+      schema:
+        type: object
+        $schema: http://json-schema.org/schema#
+        required:
+          - id
+          - audience_id
+        properties:
+          type:
+            type:
+              - string
+              - "null"
+          id:
+            type: string
+          email:
+            type:
+              - string
+              - "null"
+          state:
+            type:
+              - string
+              - "null"
+          org_id:
+            type:
+              - string
+              - "null"
+          source:
+            type:
+              - string
+              - "null"
+          country:
+            type:
+              - string
+              - "null"
+          linkedin:
+            type:
+              - string
+              - "null"
+          full_name:
+            type:
+              - string
+              - "null"
+          source_id:
+            type:
+              - string
+              - "null"
+          audience_id:
+            type: string
+          designation:
+            type:
+              - string
+              - "null"
+          isCrmSynced:
+            type:
+              - boolean
+              - "null"
+          email_verified:
+            type:
+              - boolean
+              - "null"
+          current_position_start_date:
+            type:
+              - number
+              - "null"
+        additionalProperties: true
+    transformations:
+      - type: AddFields
+        fields:
+          - type: AddedFieldDefinition
+            path:
+              - audience_id
+            value: "{{ stream_partition.audience_id }}"
+  - type: DeclarativeStream
+    name: account_activities
+    retriever:
+      type: SimpleRetriever
+      requester:
+        type: HttpRequester
+        url: >-
+          https://integration.reo.dev/account/{{ stream_partition.account_id
+          }}/activities
+        http_method: GET
+        authenticator:
+          $ref: "#/definitions/linked/HttpRequester/authenticator"
+        error_handler:
+          $ref: "#/definitions/linked/HttpRequester/error_handler"
+      record_selector:
+        type: RecordSelector
+        extractor:
+          type: DpathExtractor
+          field_path:
+            - data
+      partition_router:
+        type: CustomPartitionRouter
+        class_name: source_declarative_manifest.components.DedupingSubstreamPartitionRouter
+        parent_stream_configs:
+          - type: ParentStreamConfig
+            stream:
+              $ref: "#/streams/4"
+            parent_key: id
+            partition_field: account_id
+    primary_key:
+      - - _pk
+    schema_loader:
+      type: InlineSchemaLoader
+      schema:
+        type: object
+        $schema: http://json-schema.org/schema#
+        required:
+          - _pk
+        properties:
+          _pk:
+            type: string
+          page:
+            type:
+              - string
+              - "null"
+          actor:
+            type:
+              - string
+              - "null"
+          country:
+            type:
+              - string
+              - "null"
+          account_id:
+            type:
+              - string
+              - "null"
+          copied_text:
+            type:
+              - string
+              - "null"
+          developer_id:
+            type:
+              - string
+              - "null"
+          activity_date:
+            type:
+              - string
+              - "null"
+          activity_info:
+            type:
+              - string
+              - "null"
+          activity_type:
+            type:
+              - string
+              - "null"
+          activity_source:
+            type:
+              - string
+              - "null"
+          developer_linkedin:
+            type:
+              - string
+              - "null"
+          developer_designation:
+            type:
+              - string
+              - "null"
+        additionalProperties: true
+    transformations:
+      - type: AddFields
+        fields:
+          - type: AddedFieldDefinition
+            path:
+              - account_id
+            value: "{{ stream_partition.account_id }}"
+          - type: AddedFieldDefinition
+            path:
+              - _pk
+            value: >-
+              {{ stream_partition.account_id }}#{{ record['developer_id'] or ''
+              }}#{{ record['activity_date'] or '' }}#{{ record['activity_type']
+              or '' }}#{{ record['actor'] or '' }}#{{ record['page'] or '' }}#{{
+              record['activity_info'] or '' }}#{{ record['activity_source'] or
+              '' }}#{{ record['copied_text'] or '' }}#{{
+              record['developer_linkedin'] or '' }}#{{ record['country'] or ''
+              }}#{{ record['developer_designation'] or '' }}
+  - type: DeclarativeStream
+    name: account_developers
+    retriever:
+      type: SimpleRetriever
+      paginator:
+        $ref: "#/definitions/linked/SimpleRetriever/paginator"
+      requester:
+        type: HttpRequester
+        url: >-
+          https://integration.reo.dev/account/{{ stream_partition.account_id
+          }}/developers
+        http_method: GET
+        authenticator:
+          $ref: "#/definitions/linked/HttpRequester/authenticator"
+        error_handler:
+          $ref: "#/definitions/linked/HttpRequester/error_handler"
+      record_selector:
+        type: RecordSelector
+        extractor:
+          type: DpathExtractor
+          field_path:
+            - data
+      partition_router:
+        type: CustomPartitionRouter
+        class_name: source_declarative_manifest.components.DedupingSubstreamPartitionRouter
+        parent_stream_configs:
+          - type: ParentStreamConfig
+            stream:
+              $ref: "#/streams/4"
+            parent_key: id
+            partition_field: account_id
+    primary_key:
+      - - id
+      - - account_id
+    schema_loader:
+      type: InlineSchemaLoader
+      schema:
+        type: object
+        $schema: http://json-schema.org/schema#
+        required:
+          - id
+          - account_id
+        properties:
+          id:
+            type: string
+          account_id:
+            type: string
+          city:
+            type:
+              - string
+              - "null"
+          tags:
+            type:
+              - string
+              - "null"
+          state:
+            type:
+              - string
+              - "null"
+          org_id:
+            type:
+              - string
+              - "null"
+          country:
+            type:
+              - string
+              - "null"
+          agent_tags:
+            type:
+              - string
+              - "null"
+          designation:
+            type:
+              - string
+              - "null"
+          activity_score:
+            type:
+              - string
+              - "null"
+          developer_name:
+            type:
+              - string
+              - "null"
+          first_activity:
+            type:
+              - number
+              - "null"
+          developer_github:
+            type:
+              - string
+              - "null"
+          developer_linkedin:
+            type:
+              - string
+              - "null"
+          last_activity_date:
+            type:
+              - string
+              - "null"
+          reo_developer_link:
+            type:
+              - string
+              - "null"
+          developer_last_name:
+            type:
+              - string
+              - "null"
+          first_activity_date:
+            type:
+              - string
+              - "null"
+          developer_first_name:
+            type:
+              - string
+              - "null"
+          employee_count_range:
+            type:
+              - string
+              - "null"
+          latest_activity_time:
+            type:
+              - number
+              - "null"
+          activity_score_numeric:
+            type:
+              - number
+              - "null"
+          developer_business_email:
+            type:
+              - string
+              - "null"
+        additionalProperties: true
+    transformations:
+      - type: AddFields
+        fields:
+          - type: AddedFieldDefinition
+            path:
+              - account_id
+            value: "{{ stream_partition.account_id }}"
+  - type: DeclarativeStream
+    name: developer_activities
+    retriever:
+      type: SimpleRetriever
+      requester:
+        type: HttpRequester
+        url: >-
+          https://integration.reo.dev/developer/{{ stream_partition.developer_id
+          }}/activities
+        http_method: GET
+        authenticator:
+          $ref: "#/definitions/linked/HttpRequester/authenticator"
+        error_handler:
+          $ref: "#/definitions/linked/HttpRequester/error_handler"
+      record_selector:
+        type: RecordSelector
+        extractor:
+          type: DpathExtractor
+          field_path:
+            - data
+      partition_router:
+        type: CustomPartitionRouter
+        class_name: source_declarative_manifest.components.DedupingSubstreamPartitionRouter
+        parent_stream_configs:
+          - type: ParentStreamConfig
+            stream:
+              $ref: "#/streams/5"
+            parent_key: id
+            partition_field: developer_id
+    primary_key:
+      - - _pk
+    schema_loader:
+      type: InlineSchemaLoader
+      schema:
+        type: object
+        $schema: http://json-schema.org/schema#
+        required:
+          - _pk
+        properties:
+          _pk:
+            type: string
+          page:
+            type:
+              - string
+              - "null"
+          source_url:
+            type:
+              - string
+              - "null"
+          copied_text:
+            type:
+              - string
+              - "null"
+          developer_id:
+            type:
+              - string
+              - "null"
+          activity_date:
+            type:
+              - string
+              - "null"
+          activity_info:
+            type:
+              - string
+              - "null"
+          activity_type:
+            type:
+              - string
+              - "null"
+          activity_source:
+            type:
+              - string
+              - "null"
+        additionalProperties: true
+    transformations:
+      - type: AddFields
+        fields:
+          - type: AddedFieldDefinition
+            path:
+              - developer_id
+            value: "{{ stream_partition.developer_id }}"
+          - type: AddedFieldDefinition
+            path:
+              - _pk
+            value: >-
+              {{ stream_partition.developer_id }}#{{ record['activity_date'] or
+              '' }}#{{ record['activity_type'] or '' }}#{{ record['source_url']
+              or '' }}#{{ record['page'] or '' }}#{{ record['activity_info'] or
+              '' }}#{{ record['activity_source'] or '' }}#{{
+              record['account_name'] or '' }}#{{ record['source_type'] or ''
+              }}#{{ record['copied_text'] or '' }}#{{ record['country'] or ''
+              }}#{{ record['developer_designation'] or '' }}
+
+spec:
+  type: Spec
+  connection_specification:
+    type: object
+    title: reo.dev Source Spec
+    $schema: http://json-schema.org/draft-07/schema#
+    required:
+      - api_key
+    properties:
+      api_key:
+        type: string
+        description: >-
+          The reo.dev REST API key, sent as the `x-api-key` request header.
+          Obtained via contact@reo.dev. Stored encrypted by Airbyte.
+        order: 0
+        title: reo.dev API key
+        airbyte_secret: true
+      lists_user:
+        type: string
+        description: >-
+          Value for the additional `user` header on the Lists endpoint
+          (/api/product/list on ingest.reo.dev). Example: an account email.
+          NOTE: live tests showed the Lists endpoint returning 401 with this
+          connector's standard key — Lists may require a separately scoped key.
+          Required only if the `lists` stream is selected.
+        order: 1
+        title: Lists `user` header value
+        airbyte_secret: true
+    additionalProperties: true
+
+metadata:
+  testedStreams:
+    segments:
+      isStale: false
+      hasRecords: true
+      streamHash: 31f6943d64e0a0a1e376a16ffe4b5c31e7cf9a54
+      hasResponse: true
+      primaryKeysAreUnique: true
+      primaryKeysArePresent: true
+      responsesAreSuccessful: true
+    audiences:
+      isStale: false
+      hasRecords: true
+      streamHash: ccd232c17e4efa200b17b09d4f89460d3b6b5616
+      hasResponse: true
+      primaryKeysAreUnique: true
+      primaryKeysArePresent: true
+      responsesAreSuccessful: true
+    account_segments:
+      isStale: false
+      hasRecords: true
+      streamHash: 79bf73bde7d0a5d12082dcf91bbfae4f3d9df45a
+      hasResponse: true
+      primaryKeysAreUnique: true
+      primaryKeysArePresent: true
+      responsesAreSuccessful: true
+    audience_members:
+      isStale: false
+      hasRecords: true
+      streamHash: c55e5f56b7bf3adf06d6526242bad43232170801
+      hasResponse: true
+      primaryKeysAreUnique: true
+      primaryKeysArePresent: true
+      responsesAreSuccessful: true
+    segment_accounts:
+      isStale: false
+      hasRecords: true
+      streamHash: c13a08d566e4ec29617b7ca2375d635feb980719
+      hasResponse: true
+      primaryKeysAreUnique: true
+      primaryKeysArePresent: true
+      responsesAreSuccessful: true
+    account_activities:
+      isStale: false
+      hasRecords: true
+      streamHash: 548371267bf9a0a5720d5d2ad2274c7648ef8bbc
+      hasResponse: true
+      primaryKeysAreUnique: false
+      primaryKeysArePresent: true
+      responsesAreSuccessful: true
+    account_developers:
+      isStale: false
+      hasRecords: true
+      streamHash: 176b5fd43d9e02c3b825a9bafc8dbbac73fc651b
+      hasResponse: true
+      primaryKeysAreUnique: true
+      primaryKeysArePresent: true
+      responsesAreSuccessful: true
+    developer_segments:
+      isStale: false
+      hasRecords: true
+      streamHash: b45e0df013385b36c664840b57976f12e3ed993b
+      hasResponse: true
+      primaryKeysAreUnique: true
+      primaryKeysArePresent: true
+      responsesAreSuccessful: true
+    segment_developers:
+      isStale: false
+      hasRecords: true
+      streamHash: 6c7063742511ea267a03673d0ef17cd016513571
+      hasResponse: true
+      primaryKeysAreUnique: true
+      primaryKeysArePresent: true
+      responsesAreSuccessful: true
+    developer_activities:
+      isStale: true
+      hasRecords: true
+      streamHash: 83e20571de85dcec210fbe2d67d0ebb4e4e33025
+      hasResponse: true
+      primaryKeysAreUnique: false
+      primaryKeysArePresent: true
+      responsesAreSuccessful: true
+  autoImportSchema: {}
+  applied_migrations:
+    - migration: HttpRequesterUrlBaseToUrl
+      to_version: "*"
+      migrated_at: "2026-05-26T19:23:34.105212+00:00"
+      from_version: 6.48.0
+    - migration: HttpRequesterPathToUrl
+      to_version: "*"
+      migrated_at: "2026-05-26T19:23:34.108578+00:00"
+      from_version: 6.48.0
+
+api_budget:
+  type: HTTPAPIBudget
+  policies:
+    - type: MovingWindowCallRatePolicy
+      rates:
+        - limit: 60
+          interval: PT1M
+      matchers:
+        - method: GET
+          url_base: https://integration.reo.dev
+        - method: GET
+          url_base: https://ingest.reo.dev
+  status_codes_for_ratelimit_hit:
+    - 429
+
+concurrency_level:
+  type: ConcurrencyLevel
+  max_concurrency: 8
+  default_concurrency: 4

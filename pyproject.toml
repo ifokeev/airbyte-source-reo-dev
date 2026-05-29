@@ -1,0 +1,19 @@
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "source-reo-dev"
+version = "0.1.0"
+description = "Airbyte source connector for reo.dev with deduping substream router"
+authors = ["ifokeev"]
+license = "MIT"
+readme = "README.md"
+packages = [{ include = "source_reo_dev" }]
+
+[tool.poetry.dependencies]
+python = "^3.10,<3.13"
+airbyte-cdk = "^7.19.1"
+
+[tool.poetry.scripts]
+source-reo-dev = "source_reo_dev.run:run"

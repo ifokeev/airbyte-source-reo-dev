@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+.envrc
+build/
+dist/
+*.log
+.DS_Store
+.idea/
+.vscode/
+secrets/
+*-credentials.json
+*.pem
+*.key
