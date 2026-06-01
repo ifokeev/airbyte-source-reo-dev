@@ -810,7 +810,6 @@ streams:
       datetime_format: "%Y-%m-%d"
       cursor_datetime_formats:
         - "%Y-%m-%d"
-      cursor_granularity: P1D
       lookback_window: P7D
       is_client_side_incremental: true
       start_datetime:
@@ -1082,7 +1081,6 @@ streams:
       datetime_format: "%Y-%m-%d"
       cursor_datetime_formats:
         - "%Y-%m-%d"
-      cursor_granularity: P1D
       lookback_window: P7D
       is_client_side_incremental: true
       start_datetime:
