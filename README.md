@@ -19,6 +19,10 @@ The Python component (`source_reo_dev/components.py`) is a `DedupingSubstreamPar
 | account_developers | `/account/{id}/developers` | segment_accounts (deduped) | `id` |
 | developer_activities | `/developer/{id}/activities` | segment_developers (deduped) | `_pk` |
 
+## Incremental sync
+
+`account_activities` and `developer_activities` are **incremental** (`DatetimeBasedCursor` on `activity_date`, per-partition). reo.dev exposes no server-side date filter, so records are filtered client-side (`is_client_side_incremental`); the API returns activities sorted newest-first and paginated 1000/page. A **7-day rolling lookback** re-checks recent days each run so late-arriving events are captured, and the `_pk` dedup absorbs the overlap. The first sync backfills from `start_date` (default `2026-01-01`). All other streams are full-refresh (config tables and current-state membership snapshots where overwrite is the correct semantic).
+
 ## Build
 
 ```bash

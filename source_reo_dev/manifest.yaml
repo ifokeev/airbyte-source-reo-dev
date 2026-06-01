@@ -767,6 +767,16 @@ streams:
     name: account_activities
     retriever:
       type: SimpleRetriever
+      paginator:
+        type: DefaultPaginator
+        page_token_option:
+          type: RequestOption
+          field_name: page
+          inject_into: request_parameter
+        pagination_strategy:
+          type: PageIncrement
+          page_size: 1000
+          start_from_page: 1
       requester:
         type: HttpRequester
         url: >-
@@ -792,6 +802,19 @@ streams:
               $ref: "#/streams/4"
             parent_key: id
             partition_field: account_id
+    incremental_sync:
+      type: DatetimeBasedCursor
+      cursor_field: activity_date
+      datetime_format: "%Y-%m-%d"
+      cursor_datetime_formats:
+        - "%Y-%m-%d"
+      cursor_granularity: P1D
+      lookback_window: P7D
+      is_client_side_incremental: true
+      start_datetime:
+        type: MinMaxDatetime
+        datetime: "{{ config.get('start_date', '2026-01-01') }}"
+        datetime_format: "%Y-%m-%d"
     primary_key:
       - - _pk
     schema_loader:
@@ -1014,6 +1037,16 @@ streams:
     name: developer_activities
     retriever:
       type: SimpleRetriever
+      paginator:
+        type: DefaultPaginator
+        page_token_option:
+          type: RequestOption
+          field_name: page
+          inject_into: request_parameter
+        pagination_strategy:
+          type: PageIncrement
+          page_size: 1000
+          start_from_page: 1
       requester:
         type: HttpRequester
         url: >-
@@ -1039,6 +1072,19 @@ streams:
               $ref: "#/streams/5"
             parent_key: id
             partition_field: developer_id
+    incremental_sync:
+      type: DatetimeBasedCursor
+      cursor_field: activity_date
+      datetime_format: "%Y-%m-%d"
+      cursor_datetime_formats:
+        - "%Y-%m-%d"
+      cursor_granularity: P1D
+      lookback_window: P7D
+      is_client_side_incremental: true
+      start_datetime:
+        type: MinMaxDatetime
+        datetime: "{{ config.get('start_date', '2026-01-01') }}"
+        datetime_format: "%Y-%m-%d"
     primary_key:
       - - _pk
     schema_loader:
@@ -1120,6 +1166,20 @@ spec:
         order: 0
         title: reo.dev API key
         airbyte_secret: true
+      start_date:
+        type: string
+        format: date
+        pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        description: >-
+          Backfill floor for the incremental activity streams
+          (account_activities, developer_activities). The first sync pulls
+          activities with activity_date on or after this date; later syncs are
+          incremental with a 7-day rolling lookback. Defaults to 2026-01-01.
+        examples:
+          - "2026-01-01"
+        order: 1
+        title: Start date (activities backfill floor)
+        default: "2026-01-01"
       lists_user:
         type: string
         description: >-
@@ -1128,7 +1188,7 @@ spec:
           NOTE: live tests showed the Lists endpoint returning 401 with this
           connector's standard key — Lists may require a separately scoped key.
           Required only if the `lists` stream is selected.
-        order: 1
+        order: 2
         title: Lists `user` header value
         airbyte_secret: true
     additionalProperties: true
