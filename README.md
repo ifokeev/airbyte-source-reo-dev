@@ -23,6 +23,8 @@ The Python component (`source_reo_dev/components.py`) is a `DedupingSubstreamPar
 
 `account_activities` and `developer_activities` are **incremental** (`DatetimeBasedCursor` on `activity_date`, per-partition). reo.dev exposes no server-side date filter, so records are filtered client-side (`is_client_side_incremental`); the API returns activities sorted newest-first and paginated 1000/page. A **7-day rolling lookback** re-checks recent days each run so late-arriving events are captured, and the `_pk` dedup absorbs the overlap. The first sync backfills from `start_date` (default `2026-01-01`). All other streams are full-refresh (config tables and current-state membership snapshots where overwrite is the correct semantic).
 
+Because the API has no server-side filter, the `CursorStopPageIncrement` custom pagination strategy (`components.py`) provides a **cursor-aware early stop**: each record carries its stream slice, so once the oldest record on a page falls below this partition's incremental boundary (`cursor_slice.start_time`), paging stops — no deeper pages are fetched into already-synced history. On a backfill the boundary is the `start_date` floor, so paging proceeds to exhaustion. If a record ever lacks its slice, it degrades safely to plain page increment.
+
 ## Build
 
 ```bash

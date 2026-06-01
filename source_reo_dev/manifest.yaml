@@ -774,9 +774,11 @@ streams:
           field_name: page
           inject_into: request_parameter
         pagination_strategy:
-          type: PageIncrement
+          type: CustomPaginationStrategy
+          class_name: source_declarative_manifest.components.CursorStopPageIncrement
           page_size: 1000
           start_from_page: 1
+          cursor_field: activity_date
       requester:
         type: HttpRequester
         url: >-
@@ -1044,9 +1046,11 @@ streams:
           field_name: page
           inject_into: request_parameter
         pagination_strategy:
-          type: PageIncrement
+          type: CustomPaginationStrategy
+          class_name: source_declarative_manifest.components.CursorStopPageIncrement
           page_size: 1000
           start_from_page: 1
+          cursor_field: activity_date
       requester:
         type: HttpRequester
         url: >-

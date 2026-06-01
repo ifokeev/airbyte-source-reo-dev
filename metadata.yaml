@@ -3,7 +3,7 @@ data:
   connectorSubtype: api
   definitionId: 1d4f6e8c-7b9a-4e2c-9d5f-7e6a3b8c1d2e
   dockerRepository: ghcr.io/ifokeev/airbyte-source-reo-dev
-  dockerImageTag: 0.2.0
+  dockerImageTag: 0.2.1
   name: reo.dev
   documentationUrl: https://github.com/ifokeev/airbyte-source-reo-dev
   githubIssueLabel: source-reo-dev
