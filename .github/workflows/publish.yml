@@ -13,6 +13,8 @@ permissions:
   packages: write
 
 env:
+  # Skip Docker auto-uploaded .dockerbuild build-record artifacts (unused; fill Actions storage).
+  DOCKER_BUILD_RECORD_UPLOAD: "false"
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository_owner }}/airbyte-source-reo-dev
 
